@@ -3,6 +3,15 @@ using Data.Servicios;
 using Data;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using API.Errores;
+using System.Security.Cryptography.Xml;
+using Data.Repositorio;
+using Data.Interfaces.IRepositorio;
+using Utilidades;
+using Microsoft.Extensions.DependencyInjection;
+using BLL.Servicios.Interfaces;
+using BLL.Servicios;
 
 namespace API.Extenciones
 {
@@ -40,7 +49,28 @@ namespace API.Extenciones
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
             services.AddCors();
             services.AddScoped<ITokenServicio, TokenServicio>();
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = ActionContext =>
+                {
+                    var error = ActionContext.ModelState
+                    .Where(e => e.Value.Errors.Count > 0)
+                    .SelectMany(X => X.Value.Errors)
+                    .Select(x => x.ErrorMessage).ToArray();
+                    var errorResponse = new ApiValidacionErrorResponse
+                    {
+                        Errores = error
+                    };
+                    return new BadRequestObjectResult(errorResponse);
+                };
 
+
+            });
+
+            services.AddScoped<IUnidadTrabajo, UnidadTrabajo>();
+            services.AddAutoMapper(typeof(MappingProfile));
+
+            services.AddScoped<IEspecialidadServicio, EspecialidadServicio>();
             return services;
         }
     }
