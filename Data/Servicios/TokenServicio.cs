@@ -1,4 +1,5 @@
 ﻿using Data.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Models.Entidades;
@@ -14,21 +15,29 @@ namespace Data.Servicios
 {
     public class TokenServicio : ITokenServicio
     {
+        private readonly UserManager<UsuarioAplicacion> _userManager;
         private readonly SymmetricSecurityKey _key;
 
-        public TokenServicio(IConfiguration configuration) {
-            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["TokenKey"]));
-        }
-        public string CrearToken(Usuario usuario)
+        public TokenServicio(IConfiguration configuration, UserManager<UsuarioAplicacion> userManager)
         {
-            var claims = new List<Claim> { 
-            new Claim(JwtRegisteredClaimNames.NameId, usuario.Username)
+            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["TokenKey"]));
+            _userManager = userManager;
+        }
+        public async Task<string> CrearToken(UsuarioAplicacion usuario)
+        {
+            var claims = new List<Claim> {
+            new Claim(JwtRegisteredClaimNames.NameId, usuario.UserName)
             };
+
+            var roles = await _userManager.GetRolesAsync(usuario);
+            claims.AddRange(roles.Select(rol => new Claim(ClaimTypes.Role, rol)));
+
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
-            var tokenDescriptor = new SecurityTokenDescriptor {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.Now.AddDays(7),
-            SigningCredentials = creds,
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(7),
+                SigningCredentials = creds,
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

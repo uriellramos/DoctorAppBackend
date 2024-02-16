@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Data.Interfaces
+namespace Data.Interfaces.IRepositorio
 {
-    public interface ITokenServicio
+    public interface IMedicoRepositorio : IRepositorioGenerico<Medico>
     {
-        Task<string> CrearToken(UsuarioAplicacion usuario);
+        public void Actializar(Medico medico);
     }
 }

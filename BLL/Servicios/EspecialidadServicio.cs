@@ -60,6 +60,7 @@ namespace BLL.Servicios
                 especialidadBd.NombreEspecialidad = modeloDto.NombreEspecialidad;
                 especialidadBd.Descripcion = modeloDto.Descripcion;
                 especialidadBd.Estado = modeloDto.Estado == 1 ? true : false;
+                _unidadTrabajo.Especialidad.Actializar(especialidadBd);
                 await _unidadTrabajo.Guardar();
 
             }
@@ -102,7 +103,21 @@ namespace BLL.Servicios
                 throw;
             }
         }
+        public async Task<IEnumerable<EspecialidadDto>> ObtenerActivos()
+        {
+            try
+            {
+                var lista = await _unidadTrabajo.Especialidad.ObtenerTodos(x=>x.Estado==true,
+                    orderBy: e => e.OrderBy(e => e.NombreEspecialidad));
+                return _mapper.Map<IEnumerable<EspecialidadDto>>(lista);
 
-        
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
     }
 }
